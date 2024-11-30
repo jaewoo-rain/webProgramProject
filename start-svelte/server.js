@@ -78,7 +78,7 @@ app.post('/register', async (req, res) => {
     }
 })
 
-// 검색
+// 검색 - 도우미
 app.get('/suggest', async (req, res) => {
     const query = req.query.q;
 
@@ -99,6 +99,27 @@ app.get('/suggest', async (req, res) => {
         res.status(500).json({ message: '서버에러' });
     }
 });
+
+// 검색 결과 페이지에서 아이디요청
+app.get('/flower/:name', async (req, res) => {
+    let flowerName = req.params.name
+    try {
+        let result = await db.collection('flower').findOne(
+            { name: flowerName },
+            { projection: { _id: 0 } } // _id 필드 제외
+        )
+        const comments = await db.collection('comments')
+            .find(
+                { flowerName: flowerName }, // flowerName 기준으로 검색
+                { projection: { _id: 0, flowerName: 0 } } // _id 필드 제외
+            ).toArray(); // 배열로 변환
+        result.comments = comments
+        return res.json(result)
+    } catch (err) {
+        console.log(err);
+        return res.json({ message: "실패" })
+    }
+})
 
 
 // SvelteKit의 핸들러 연결
